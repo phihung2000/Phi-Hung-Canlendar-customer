@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getRandomColor } from '../../utils/getRandomColor';
 import PopUpInputEvent from '../PopUpInputEvent';
+import WeekView from '../WeekView';
 
 const Calendar = () => {
   // State lưu trữ tháng và năm hiện tại
@@ -8,6 +9,22 @@ const Calendar = () => {
   const [openPopUp, setOpenPopUp] = useState(false)
   const [isDayChoose, setIsDayChoose] = useState('');
   const [events, setEvents] = useState<any[]>([])
+  const [viewMode, setViewMode] = useState('month');
+
+  const getStartOfWeek = (date: any) => {
+    const startOfWeek = new Date(date);
+    startOfWeek.setDate(date.getDate() - date.getDay());
+    return startOfWeek;
+  };
+
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => getStartOfWeek(currentMonth));
+
+  const changeWeek = (offset: number) => {
+    const newWeekStart = new Date(currentWeekStart);
+    newWeekStart.setDate(currentWeekStart.getDate() + offset * 7);
+    setCurrentWeekStart(newWeekStart);
+    setCurrentMonth(newWeekStart);
+  };
 
   // Hàm để chuyển tháng
   const changeMonth = (offset: number) => {
@@ -15,16 +32,16 @@ const Calendar = () => {
     setCurrentMonth(newMonth);
   };
 
-  const handleMonthSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedMonth = parseInt(event.target.value);
-    const newDate = new Date(currentMonth.setMonth(selectedMonth));
-    setCurrentMonth(newDate);
+  const handleViewModeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setViewMode(event.target.value);
   };
 
-  const handleClickDay = (day: any) => {
-    const month = currentMonth.getMonth()+1;
-    const year = currentMonth.getFullYear();
-    const formatDay = day < 10? `0${day}` : `${day}`;
+  const handleClickDay = (day: any, isChooseToday?: boolean) => {
+    const nowDate = new Date()
+
+    const month = isChooseToday ? nowDate.getMonth()+1 : currentMonth.getMonth()+1;
+    const year = isChooseToday ? nowDate.getFullYear() : currentMonth.getFullYear();
+    const formatDay = isChooseToday ? nowDate.getDate()  : (day < 10? `0${day}` : `${day}`);
     const formatMonth = month < 10 ? `0${month}` : `${month}`;
 
     const fullDate = `${formatDay}-${formatMonth}-${year}`
@@ -94,6 +111,7 @@ const Calendar = () => {
 }, [openPopUp]);
 
   const daysInMonth = generateCalendar(currentMonth);
+
   const isToday = (day: number | null) =>
     day === new Date().getDate() && currentMonth.getMonth() === new Date().getMonth() && currentMonth.getFullYear() === new Date().getFullYear();
 
@@ -102,55 +120,64 @@ const Calendar = () => {
       <div className='root-calendar'>
         <div className='header-calendar'>
           <div className='left-calendar'>
-            <span className='text-left-calendar'>To Day</span>
-            <button className='button-calendar' onClick={() => changeMonth(-1)}>&lt;</button>
-            <button className='button-calendar' onClick={() => changeMonth(1)}>&gt;</button>
+            <span className='text-left-calendar' onClick={() =>handleClickDay(1, true)}>To Day</span>
+            <button className='button-calendar' onClick={() =>  viewMode === 'month' ? changeMonth(-1) : changeWeek(-1)}>&lt;</button>
+            <button className='button-calendar' onClick={() => viewMode === 'month' ? changeMonth(1) : changeWeek(1)}>&gt;</button>
             <h2 className='month-year'>{currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</h2>
           </div>
           <div className='right-calendar'>
-            <select value={currentMonth.getMonth()} onChange={handleMonthSelect} className='selected-month'>
-              {Array.from({ length: 12 }, (_, i) => (
-                <option key={i} value={i}>
-                  {new Date(0, i).toLocaleString('default', { month: 'long' })}
-                </option>
-              ))}
+            <select onChange={handleViewModeChange} className="view-mode-select">
+              <option value="month">Month</option>
+              <option value="week">Week</option>
             </select>
           </div>
         </div>
 
-        <table className='table-calendar'>
-          <thead>
-            <tr>
-              <th>Sun</th>
-              <th>Mon</th>
-              <th>Tue</th>
-              <th>Wed</th>
-              <th>Thu</th>
-              <th>Fri</th>
-              <th>Sat</th>
-            </tr>
-          </thead>
-          <tbody>
-            {daysInMonth.map((week, index) => (
-              <tr key={index} id={`${index}`}>
-                {week.map((dayData, i) => (
-                  <td key={i} onClick={() => dayData?.day ? handleClickDay(dayData?.day) : ''}>
-                    {dayData?.day ?
-                      <div className='div-day'>
-                        <span className={isToday(dayData?.day) ? 'is-today' : 'not-today'}>{dayData?.day}</span>
-                        <div className="events">
-                          {dayData && dayData?.events.map((event, idx) => (
-                            <p key={idx} className="event-text" style={{backgroundColor: getRandomColor()}}>{event.title}</p>
-                          ))}
-                        </div>
-                      </div>
-                      : null}
-                  </td>
-                ))}
+           {/* Giao diện tháng */}
+           {viewMode === 'month' && (
+          <table className="table-calendar">
+            <thead>
+              <tr>
+                <th>Sun</th>
+                <th>Mon</th>
+                <th>Tue</th>
+                <th>Wed</th>
+                <th>Thu</th>
+                <th>Fri</th>
+                <th>Sat</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {daysInMonth.map((week, index) => (
+                <tr key={index}>
+                  {week.map((dayData, i) => (
+                    <td key={i} onClick={() => dayData?.day ? handleClickDay(dayData?.day) : ''}>
+                      {dayData?.day ? (
+                        <div className="div-day">
+                          <span className={isToday(dayData?.day) ? 'is-today' : 'not-today'}>{dayData?.day}</span>
+                          <div className="events">
+                            {dayData?.events.map((event, idx) => (
+                              <p key={idx} className="event-text" style={{ backgroundColor: getRandomColor() }}>{event.title}</p>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+
+        {/* Giao diện tuần */}
+        {viewMode === 'week' && (
+          <WeekView 
+          events={events}
+          weekStartDate={currentWeekStart} // Pass the start date
+          handleClickDay={handleClickDay} 
+          />
+        )}
       </div>
       <PopUpInputEvent isOpen={openPopUp} date={isDayChoose} setIsOpen={setOpenPopUp}/>
     </>

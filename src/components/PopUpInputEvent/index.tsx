@@ -1,6 +1,6 @@
 import { useFormik } from "formik";
 import { toast } from "react-toastify"
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import * as Yup from 'yup';
 import { title } from "process";
 
@@ -16,6 +16,11 @@ type typeProps = {
 
 const PopUpInputEvent = (props: typeProps) => {
     const { isOpen, date, setIsOpen } = props;
+    const [events, setEvents] = useState(() => {
+        const storedEvents = localStorage.getItem('events');
+        return storedEvents ? JSON.parse(storedEvents) : [];
+      });
+    const [dayEvents, setDayEvents] = useState<any[]>([]);
     const initialValues = {
         title: "",
         date: "",
@@ -25,7 +30,7 @@ const PopUpInputEvent = (props: typeProps) => {
         initialValues: initialValues,
         enableReinitialize: true,
         validationSchema: validationSchema,
-        onSubmit: (values) => { handleSubmit()}
+        onSubmit: (values) => { handleSubmit() }
     });
 
     const handleSubmit = () => {
@@ -34,7 +39,6 @@ const PopUpInputEvent = (props: typeProps) => {
             date: date,
             time: formik.values['time']
         }
-        const events = JSON.parse(localStorage.getItem('events') || '[]')
 
         events.push(newEvent);
         localStorage.setItem('events', JSON.stringify(events));
@@ -43,6 +47,26 @@ const PopUpInputEvent = (props: typeProps) => {
         toast.success('save success')
         formik.resetForm();
     }
+
+    useEffect(() => {
+        // Filter events for the selected date
+        if (date) {
+            const filteredEvents = events.filter((event: { date: string; }) => event.date === date);
+            setDayEvents(filteredEvents);
+        } else {
+            setDayEvents([])
+        }
+    }, [date, events]);
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden'; // Prevent scrolling
+        } else {
+            document.body.style.overflow = 'auto'; // Restore scrolling
+        }
+        return () => {
+            document.body.style.overflow = 'auto'; // Important: Restore on unmount
+        };
+    }, [isOpen]);
 
     return (
         <>
@@ -62,8 +86,8 @@ const PopUpInputEvent = (props: typeProps) => {
                                 placeholder="Please enter event"
                             />
                             {formik.errors['title'] && formik.touched['title'] &&
-                                    <span className='error'>{String(formik.errors['title'])}</span>
-                                }
+                                <span className='error'>{String(formik.errors['title'])}</span>
+                            }
                         </div>
                         <div className="div-input">
                             <p>Choose hours: </p>
@@ -75,8 +99,18 @@ const PopUpInputEvent = (props: typeProps) => {
                             />
                         </div>
                         <div className="div-button">
-                            <button className="button-cancel"  onClick={() => {setIsOpen(false); formik.resetForm()}}>Cancel</button>
+                            <button className="button-cancel" onClick={() => { setIsOpen(false); formik.resetForm() }}>Cancel</button>
                             <button className="button-save" type="button" onClick={() => formik.handleSubmit()}>Save</button>
+                        </div>
+
+                        <div className="show-events">
+                            {dayEvents.map((event, index) => (
+                                <div key={index} className="event-item">
+                                    <p className="title">Name Event: <span>{event.title}</span></p>
+                                    {event.time && <p className="title"> Time : {event.time}</p>}
+                                </div>
+                            ))}
+                            {dayEvents.length === 0 && <p>No events for this day.</p>}
                         </div>
                     </div>
                 </div>
