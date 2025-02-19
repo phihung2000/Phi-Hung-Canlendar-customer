@@ -39,15 +39,15 @@ const Calendar = () => {
   const handleClickDay = (day: any, isChooseToday?: boolean) => {
     const nowDate = new Date()
 
-    const month = isChooseToday ? nowDate.getMonth()+1 : currentMonth.getMonth()+1;
+    const month = isChooseToday ? nowDate.getMonth() + 1 : currentMonth.getMonth() + 1;
     const year = isChooseToday ? nowDate.getFullYear() : currentMonth.getFullYear();
-    const formatDay = isChooseToday ? nowDate.getDate()  : (day < 10? `0${day}` : `${day}`);
+    const formatDay = isChooseToday ? nowDate.getDate() : (day < 10 ? `0${day}` : `${day}`);
     const formatMonth = month < 10 ? `0${month}` : `${month}`;
 
     const fullDate = `${formatDay}-${formatMonth}-${year}`
 
     setOpenPopUp(true);
-    return day? setIsDayChoose(fullDate): '';
+    return day ? setIsDayChoose(fullDate) : '';
   }
 
   // Hàm để tạo danh sách các ngày trong tháng
@@ -94,8 +94,8 @@ const Calendar = () => {
   useEffect(() => {
     // Hàm để lấy sự kiện từ localStorage
     const loadEvents = () => {
-        const storedEvents = JSON.parse(localStorage.getItem('events') || '[]');
-        setEvents(storedEvents);
+      const storedEvents = JSON.parse(localStorage.getItem('events') || '[]');
+      setEvents(storedEvents);
     };
 
     // Lấy dữ liệu ban đầu khi component mount
@@ -106,9 +106,9 @@ const Calendar = () => {
 
     // Cleanup khi component unmount
     return () => {
-        window.removeEventListener('storage', loadEvents);
+      window.removeEventListener('storage', loadEvents);
     };
-}, [openPopUp]);
+  }, [openPopUp]);
 
   const daysInMonth = generateCalendar(currentMonth);
 
@@ -120,8 +120,8 @@ const Calendar = () => {
       <div className='root-calendar'>
         <div className='header-calendar'>
           <div className='left-calendar'>
-            <span className='text-left-calendar' onClick={() =>handleClickDay(1, true)}>To Day</span>
-            <button className='button-calendar' onClick={() =>  viewMode === 'month' ? changeMonth(-1) : changeWeek(-1)}>&lt;</button>
+            <span className='text-left-calendar' onClick={() => handleClickDay(1, true)}>To Day</span>
+            <button className='button-calendar' onClick={() => viewMode === 'month' ? changeMonth(-1) : changeWeek(-1)}>&lt;</button>
             <button className='button-calendar' onClick={() => viewMode === 'month' ? changeMonth(1) : changeWeek(1)}>&gt;</button>
             <h2 className='month-year'>{currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</h2>
           </div>
@@ -133,8 +133,8 @@ const Calendar = () => {
           </div>
         </div>
 
-           {/* Giao diện tháng */}
-           {viewMode === 'month' && (
+        {/* Giao diện tháng */}
+        {viewMode === 'month' && (
           <table className="table-calendar">
             <thead>
               <tr>
@@ -157,7 +157,10 @@ const Calendar = () => {
                           <span className={isToday(dayData?.day) ? 'is-today' : 'not-today'}>{dayData?.day}</span>
                           <div className="events">
                             {dayData?.events.map((event, idx) => (
-                              <p key={idx} className="event-text" style={{ backgroundColor: getRandomColor() }}>{event.title}</p>
+                              <div key={idx} className='div-events' style={{ backgroundColor: getRandomColor() }}>
+                                <div className='left-events'></div>
+                                <p key={idx} className="event-text">{event.title}</p>
+                              </div>
                             ))}
                           </div>
                         </div>
@@ -172,14 +175,14 @@ const Calendar = () => {
 
         {/* Giao diện tuần */}
         {viewMode === 'week' && (
-          <WeekView 
-          events={events}
-          weekStartDate={currentWeekStart} // Pass the start date
-          handleClickDay={handleClickDay} 
+          <WeekView
+            events={events}
+            weekStartDate={currentWeekStart} // Pass the start date
+            handleClickDay={handleClickDay}
           />
         )}
       </div>
-      <PopUpInputEvent isOpen={openPopUp} date={isDayChoose} setIsOpen={setOpenPopUp}/>
+      <PopUpInputEvent isOpen={openPopUp} date={isDayChoose} setIsOpen={setOpenPopUp} />
     </>
   );
 };

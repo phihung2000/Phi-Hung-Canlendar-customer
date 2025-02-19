@@ -19,12 +19,14 @@ const PopUpInputEvent = (props: typeProps) => {
     const [events, setEvents] = useState(() => {
         const storedEvents = localStorage.getItem('events');
         return storedEvents ? JSON.parse(storedEvents) : [];
-      });
+    });
     const [dayEvents, setDayEvents] = useState<any[]>([]);
     const initialValues = {
         title: "",
         date: "",
         time: "",
+        type: "",
+        url: ""
     }
     const formik = useFormik({
         initialValues: initialValues,
@@ -37,7 +39,9 @@ const PopUpInputEvent = (props: typeProps) => {
         const newEvent = {
             title: formik.values['title'],
             date: date,
-            time: formik.values['time']
+            time: formik.values['time'],
+            type: formik.values['type'],
+            url: formik.values['url']
         }
 
         events.push(newEvent);
@@ -57,7 +61,10 @@ const PopUpInputEvent = (props: typeProps) => {
             setDayEvents([])
         }
     }, [date, events]);
+
     useEffect(() => {
+        const storedEvents = localStorage.getItem('events');
+        setEvents(storedEvents ? JSON.parse(storedEvents) : [])
         if (isOpen) {
             document.body.style.overflow = 'hidden'; // Prevent scrolling
         } else {
@@ -98,6 +105,23 @@ const PopUpInputEvent = (props: typeProps) => {
                                 placeholder="Choose hours"
                             />
                         </div>
+                        <div className="div-input">
+                            <p>Choose type event: </p>
+                            <select onChange={(e) => formik.setFieldValue('type', e.target.value)} className="view-mode-select">
+                                <option value="Holiday">Holiday</option>
+                                <option value="Meeting">Meeting</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        {formik.values['type'] === 'Meeting' && <div className="div-input">
+                            <p>Enter Url: </p>
+                            <input
+                                type="text"
+                                value={formik.values['url']}
+                                onChange={(e) => formik.setFieldValue("url", e.target.value)}
+                                placeholder="Enter Url"
+                            />
+                        </div>}
                         <div className="div-button">
                             <button className="button-cancel" onClick={() => { setIsOpen(false); formik.resetForm() }}>Cancel</button>
                             <button className="button-save" type="button" onClick={() => formik.handleSubmit()}>Save</button>
@@ -106,8 +130,22 @@ const PopUpInputEvent = (props: typeProps) => {
                         <div className="show-events">
                             {dayEvents.map((event, index) => (
                                 <div key={index} className="event-item">
-                                    <p className="title">Name Event: <span>{event.title}</span></p>
-                                    {event.time && <p className="title"> Time : {event.time}</p>}
+                                    <div className="left-event-pop-up"></div>
+                                    <div className="center-event-pop-up">
+                                        <span className="title"><span>{event.title}</span></span>
+                                        {event.time && <span className="title">{event.time}</span>}
+                                        {event.type === 'Meeting' && (
+                                        <div className="div-profile">
+                                            <img src="/icon/person-button-svgrepo-com.svg" className="icon-video-call" alt="Description" />
+                                            <a href="https://translate.google.com/">View client profile</a>
+                                        </div>
+                                    )}
+                                    </div>
+                                    {event.type === 'Meeting' && (
+                                        <div className="Right-event-pop-up" onClick={() => window.open(event?.url, '_blank')}>
+                                            <img src="/icon/camera-svgrepo-com.svg" className="icon-video-call" alt="Description" />
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                             {dayEvents.length === 0 && <p>No events for this day.</p>}

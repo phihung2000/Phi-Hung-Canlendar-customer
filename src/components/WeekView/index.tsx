@@ -20,7 +20,7 @@ const WeekView = (props: typeProps) => {
     const generateHours = () => {
         const hours = [];
         for (let i = 0; i < 24; i++) {
-            hours.push(i< 10 ? `0${i}`: i);
+            hours.push(i < 10 ? `0${i}` : i);
         }
         return hours;
     };
@@ -56,8 +56,12 @@ const WeekView = (props: typeProps) => {
                             return (
                                 <td key={day.getTime()} className="hour-cell" onClick={() => handleClickDay(day.getDate())}>
                                     {dayEvents.map((event, idx) => (
-                                        <div key={idx} className="events" >
-                                            <p className="event-text" style={{ backgroundColor: getRandomColor() }}>{event.title}</p>
+                                        // <div key={idx} className="events" >
+                                        //     <p className="event-text" style={{ backgroundColor: getRandomColor() }}>{event.title}</p>
+                                        // </div>
+                                        <div key={idx} className='div-events' style={{ backgroundColor: getRandomColor() }}>
+                                            <div className='left-events'></div>
+                                            <p key={idx} className="event-text">{event.title}</p>
                                         </div>
                                     ))}
                                 </td>
