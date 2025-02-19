@@ -35,7 +35,7 @@ const PopUpInputEvent = (props: typeProps) => {
         title: "",
         date: "",
         time: "",
-        type: "",
+        type: "Holiday",
         url: ""
     }
     const formik = useFormik({
