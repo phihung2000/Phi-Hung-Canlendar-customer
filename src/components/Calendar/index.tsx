@@ -2,14 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { getRandomColor } from '../../utils/getRandomColor';
 import PopUpInputEvent from '../PopUpInputEvent';
 import WeekView from '../WeekView';
+import Select from 'react-select'
+
+const options = [
+  { value: 'Month', label: 'Month' },
+  { value: 'Week', label: 'Week' },
+]
 
 const Calendar = () => {
-  // State lưu trữ tháng và năm hiện tại
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [openPopUp, setOpenPopUp] = useState(false)
   const [isDayChoose, setIsDayChoose] = useState('');
   const [events, setEvents] = useState<any[]>([])
-  const [viewMode, setViewMode] = useState('month');
+  const [viewMode, setViewMode] = useState('Month');
 
   const getStartOfWeek = (date: any) => {
     const startOfWeek = new Date(date);
@@ -32,11 +37,13 @@ const Calendar = () => {
     setCurrentMonth(newMonth);
   };
 
-  const handleViewModeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setViewMode(event.target.value);
-  };
-
   const handleClickDay = (day: any, isChooseToday?: boolean) => {
+    const daySpan = document.querySelector(`.div-day span[data-day="${day}"]`);
+    const allDaySpans = document.querySelectorAll('.div-day span');
+    allDaySpans.forEach(span => span.classList.remove('isClick'));
+    if (daySpan) {
+      daySpan.classList.add('isClick');
+    }
     const nowDate = new Date()
 
     const month = isChooseToday ? nowDate.getMonth() + 1 : currentMonth.getMonth() + 1;
@@ -50,39 +57,35 @@ const Calendar = () => {
     return day ? setIsDayChoose(fullDate) : '';
   }
 
-  // Hàm để tạo danh sách các ngày trong tháng
+  // Function to generate list of days in month
   const generateCalendar = (month: Date) => {
-    const startDate = new Date(month.getFullYear(), month.getMonth(), 1); // Ngày đầu tháng
-    const endDate = new Date(month.getFullYear(), month.getMonth() + 1, 0); // Ngày cuối tháng
+    const startDate = new Date(month.getFullYear(), month.getMonth(), 1);
+    const endDate = new Date(month.getFullYear(), month.getMonth() + 1, 0);
 
-    // Lấy ngày trong tuần của ngày đầu tháng
     const startDay = startDate.getDay();
 
-    // Tổng số ngày trong tháng
     const totalDaysInMonth = endDate.getDate();
 
-    // Tạo một mảng các ngày cho calendar
     const days = [];
     let dayCounter = 1;
 
-    // Thêm các ngày vào mảng, bắt đầu từ vị trí của startDay
     for (let i = 0; i < 6; i++) {
       const week = [];
       for (let j = 0; j < 7; j++) {
         if (i === 0 && j < startDay) {
-          week.push(null); // Thêm null nếu ngày chưa đến
+          week.push(null);
         } else if (dayCounter <= totalDaysInMonth) {
           const currentDate = new Date(month.getFullYear(), month.getMonth(), dayCounter);
-          // Lọc các sự kiện của ngày hiện tại
+          // Filter events of current day
           const formattedDate = `${currentDate.getDate() < 10 ? '0' + currentDate.getDate() : currentDate.getDate()}-${(currentDate.getMonth() + 1) < 10 ? '0' + (currentDate.getMonth() + 1) : (currentDate.getMonth() + 1)}-${currentDate.getFullYear()}`;
           const dayEvents = events.filter(event => event.date === formattedDate);
           week.push({
             day: dayCounter,
-            events: dayEvents, // Lưu tất cả sự kiện của ngày đó
+            events: dayEvents,
           });
           dayCounter++;
         } else {
-          week.push(null); // Thêm null nếu đã hết ngày trong tháng
+          week.push(null);
         }
       }
       days.push(week);
@@ -92,19 +95,15 @@ const Calendar = () => {
   };
 
   useEffect(() => {
-    // Hàm để lấy sự kiện từ localStorage
+    // Function to get event from localStorage
     const loadEvents = () => {
       const storedEvents = JSON.parse(localStorage.getItem('events') || '[]');
       setEvents(storedEvents);
     };
-
-    // Lấy dữ liệu ban đầu khi component mount
     loadEvents();
 
-    // Lắng nghe sự thay đổi của localStorage
     window.addEventListener('storage', loadEvents);
 
-    // Cleanup khi component unmount
     return () => {
       window.removeEventListener('storage', loadEvents);
     };
@@ -121,20 +120,24 @@ const Calendar = () => {
         <div className='header-calendar'>
           <div className='left-calendar'>
             <span className='text-left-calendar' onClick={() => handleClickDay(1, true)}>To Day</span>
-            <button className='button-calendar' onClick={() => viewMode === 'month' ? changeMonth(-1) : changeWeek(-1)}>&lt;</button>
-            <button className='button-calendar' onClick={() => viewMode === 'month' ? changeMonth(1) : changeWeek(1)}>&gt;</button>
+            <button className='button-calendar' onClick={() => viewMode === 'Month' ? changeMonth(-1) : changeWeek(-1)}>&lt;</button>
+            <button className='button-calendar-desktop' onClick={() => viewMode === 'Month' ? changeMonth(1) : changeWeek(1)}>&gt;</button>
             <h2 className='month-year'>{currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</h2>
+            <button className='button-calendar-mobile' onClick={() => viewMode === 'Month' ? changeMonth(1) : changeWeek(1)}>&gt;</button>
           </div>
           <div className='right-calendar'>
-            <select onChange={handleViewModeChange} className="view-mode-select">
-              <option value="month">Month</option>
-              <option value="week">Week</option>
-            </select>
+            <Select
+              options={options}
+              onChange={(selectedOption) => selectedOption && setViewMode(selectedOption.value)}
+              value={{ value: viewMode, label: viewMode }}
+              className="view-mode-select"
+              classNamePrefix="react-select"
+            />
           </div>
         </div>
 
-        {/* Giao diện tháng */}
-        {viewMode === 'month' && (
+        {/* page month*/}
+        {viewMode === 'Month' && (
           <table className="table-calendar">
             <thead>
               <tr>
@@ -154,7 +157,7 @@ const Calendar = () => {
                     <td key={i} onClick={() => dayData?.day ? handleClickDay(dayData?.day) : ''}>
                       {dayData?.day ? (
                         <div className="div-day">
-                          <span className={isToday(dayData?.day) ? 'is-today' : 'not-today'}>{dayData?.day}</span>
+                          <span className={isToday(dayData?.day) ? 'is-today' : dayData.events.length > 0 ? 'is-Events' : 'not-today'} data-day={dayData?.day}>{dayData?.day}</span>
                           <div className="events">
                             {dayData?.events.map((event, idx) => (
                               <div key={idx} className='div-events' style={{ backgroundColor: getRandomColor() }}>
@@ -173,11 +176,11 @@ const Calendar = () => {
           </table>
         )}
 
-        {/* Giao diện tuần */}
-        {viewMode === 'week' && (
+        {/* page week */}
+        {viewMode === 'Week' && (
           <WeekView
             events={events}
-            weekStartDate={currentWeekStart} // Pass the start date
+            weekStartDate={currentWeekStart}
             handleClickDay={handleClickDay}
           />
         )}
